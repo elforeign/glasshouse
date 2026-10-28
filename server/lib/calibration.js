@@ -47,6 +47,22 @@ function sameContext(a, b) {
   return object(a) && object(b) && Object.keys(a).length === 3 &&
     a.input === b.input && a.pictureMode === b.pictureMode && a.dynamicRange === b.dynamicRange;
 }
+function nativeDimension(context) {
+  return { input: context.input, pictureMode: context.pictureMode, _3dStatus: '2d' };
+}
+function sameNativeContext(a, b) {
+  return object(a) && object(b) && Object.keys(a).length === 3 &&
+    a.input === b.input && a.pictureMode === b.pictureMode && a._3dStatus === b._3dStatus;
+}
+function reportedContextMatches(reported, context) {
+  if (!object(reported)) return false;
+  var native = nativeDimension(context);
+  var keys = Object.keys(reported);
+  return keys.length >= 3 && keys.length <= 4 &&
+    keys.every(function (key) { return ['input', 'pictureMode', '_3dStatus', 'dynamicRange'].indexOf(key) !== -1; }) &&
+    reported.input === native.input && reported.pictureMode === native.pictureMode && reported._3dStatus === '2d' &&
+    (reported.dynamicRange === undefined || reported.dynamicRange === context.dynamicRange);
+}
 function call(method, args, cb) {
   if (!lunaFn) return cb(null);
   lunaFn(method, args, function (reply) { cb(reply && reply.returnValue === true ? reply : null); });
@@ -170,11 +186,16 @@ function readings(cb, active) {
         cb(out);
       });
     }
-    call(SETTINGS, { category: 'picture', dimension: dimension, keys: PICTURE_KEYS }, function (r) {
+    // On the C9, adjustment keys use input/pictureMode/_3dStatus. The
+    // pictureMode selector alone uses dynamicRange instead of pictureMode.
+    var queryDimension = nativeDimension(dimension);
+    // A named key absent on this firmware makes the C9 refuse the entire
+    // read. Read the category, then retain only the calibration allowlist.
+    call(SETTINGS, { category: 'picture', dimension: queryDimension }, function (r) {
       var values = pick(r && r.settings);
       var echoed = r && object(r.dimension) ? r.dimension : null;
-      out.pictureContexts.push({ requested: dimension, reported: echoed, settings: values,
-        contextVerified: !!(sameContext(echoed, dimension) && Object.keys(values).length) });
+      out.pictureContexts.push({ requested: dimension, queryDimension: queryDimension, reported: echoed, settings: values,
+        contextVerified: !!(reportedContextMatches(echoed, dimension) && Object.keys(values).length) });
       nextContext();
     });
   }
@@ -256,8 +277,13 @@ function validate(archive) {
   if (!object(readingsValue) || !object(readingsValue.factoryWhiteBalance) || !Array.isArray(readingsValue.pictureContexts) || readingsValue.pictureContexts.length !== contexts().length) fail(msg('srv.calibration.invalidReadings', 'Invalid calibration readings'));
   var expected = contexts();
   readingsValue.pictureContexts.forEach(function (r, index) {
+    var query = nativeDimension(expected[index]);
+    var dimensionVerified = object(r) && (r.queryDimension
+      ? sameNativeContext(r.queryDimension, query) && reportedContextMatches(r.reported, r.requested)
+      : sameContext(r.reported, r.requested));
     if (!object(r) || !sameContext(r.requested, expected[index]) || !object(r.settings) || Object.keys(r.settings).some(function (key) { return PICTURE_KEYS.indexOf(key) === -1; }) ||
-        typeof r.contextVerified !== 'boolean' || (r.contextVerified && (!sameContext(r.reported, r.requested) || !Object.keys(r.settings).length))) fail(msg('srv.calibration.invalidContext', 'Invalid picture context'));
+        (r.queryDimension && !sameNativeContext(r.queryDimension, query)) ||
+        typeof r.contextVerified !== 'boolean' || (r.contextVerified && (!dimensionVerified || !Object.keys(r.settings).length))) fail(msg('srv.calibration.invalidContext', 'Invalid picture context'));
   });
   if (archive.manifestSha256 !== manifestHash(archive)) fail(msg('srv.calibration.manifestIntegrity', 'Calibration manifest integrity failed'));
   return coverage(archive);

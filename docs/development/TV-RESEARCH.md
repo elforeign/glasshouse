@@ -1880,7 +1880,9 @@ service's reported values, not the whole EEPROM.
 
 The generalized calibration archive captures those allowlisted file types
 and explicit picture-context getter replies without switching inputs or
-picture modes. Its capture behavior has not yet been qualified on a TV. It
+picture modes. An isolated capture on 28 October 2026 saved 29 files whose bytes matched the
+existing preservation hashes and confirmed 10 SDR Expert contexts. All before/after
+calibration, white-balance, OLED, installed-code and HDMI EDID readbacks matched. It
 keeps absent or unconfirmed contexts as gaps and implements no restore.
 LG's settings dimensions use `sdr`, `hdr` and `dolbyHdr`; these are separate
 from the audio/video diagnostics' display labels. The
@@ -1888,3 +1890,12 @@ from the audio/video diagnostics' display labels. The
 also notes that calibration getters may return effective, processed LUTs.
 A future restore must establish original versus effective data and qualify
 reload/order/recovery independently for each supported model and firmware.
+
+The C9's `getSystemSettingDesc` reports dimensions
+`input/pictureMode/_3dStatus` for backlight, contrast and white balance, and
+`input/_3dStatus/dynamicRange` for the pictureMode selector. Explicit queries
+missing `_3dStatus: 2d` returned no DB result. Asking for absent named keys also
+refused a profile read. Reading the category with the native three dimensions
+and retaining only allowlisted calibration keys yielded Expert 1/2 readings
+for apps/default and HDMI 1-4 without activating those inputs or modes. Twenty
+HDR/Dolby Vision contexts remained unconfirmed and are retained as gaps.

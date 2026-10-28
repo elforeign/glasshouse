@@ -83,8 +83,12 @@ try {
     assert.strictEqual(archive.skippedFiles.length, 1);
     assert.strictEqual(JSON.stringify(archive).indexOf('02:00:00:00:00:01'), -1, 'no raw MAC');
     assert.strictEqual(calibration.validate(clone(archive)).files, 2);
-    assert(calls.some(function (c) { return c[1].dimension && c[1].dimension.dynamicRange === 'hdr'; }));
-    assert(calls.some(function (c) { return c[1].dimension && c[1].dimension.dynamicRange === 'dolbyHdr'; }));
+    assert(archive.readings.pictureContexts.some(function (c) { return c.requested.dynamicRange === 'hdr'; }));
+    assert(archive.readings.pictureContexts.some(function (c) { return c.requested.dynamicRange === 'dolbyHdr'; }));
+    calls.filter(function (c) { return c[1].dimension; }).forEach(function (c) {
+      assert.strictEqual(c[1].dimension._3dStatus, '2d');
+      assert.strictEqual(c[1].dimension.dynamicRange, undefined);
+    });
   });
   check('inspection matches a TV but never enables restoration', function () {
     calibration.inspect(archive, function (r) {

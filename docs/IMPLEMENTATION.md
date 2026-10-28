@@ -1122,8 +1122,11 @@ Capture reads allowlisted regular files under two fixed roots, refusing
 symlinks, hard links, replaced descriptors and files changing during a read.
 Limits are 2 MiB per file, 8 MiB total and 128 entries per directory. The two
 snapshots include byte content, file inventory, getter readings and identity;
-a change refuses the whole result. Readings request explicit contexts and
-count only exact dimension replies. A single in-memory owner and 40-second
+a change refuses the whole result. Readings request explicit C9 input/pictureMode/2D contexts, read the category
+to avoid failures from absent named keys, and retain only allowlisted keys.
+Only matching native dimensions count; an extra returned dynamic range must
+also agree. Earlier preview archives with the original dimension shape remain
+inspectable. A single in-memory owner and 40-second
 deadline bound capture; late getter replies cannot publish an archive or
 continue the remaining read sequence.
 

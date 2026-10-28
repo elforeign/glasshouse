@@ -18,8 +18,9 @@ file and metadata integrity and compares its TV identity and firmware with the
 current TV. It never applies the archive.
 
 The initial capture profile accepts C9 TVs reporting firmware 05.50.00. It is
-based on the storage observed on an OLED65C9PUA (webOS 4.10.2); the generalized
-capture needs a hardware trial. Other models and firmware are refused.
+based on the storage observed on an OLED65C9PUA (webOS 4.10.2); an isolated read-only capture has now been tried on that TV, with 29 stored
+files and 10 SDR Expert contexts confirmed. Dashboard installation and complete
+coverage remain unqualified. Other models and firmware are refused.
 A readable hardware identity is required. The buttons require dashboard
 controls to be allowed and use the existing authentication and origin guards.
 
@@ -39,9 +40,12 @@ It requests cool, medium and warm factory white balance, plus selected SDR
 Expert, HDR Cinema/Home and Dolby Vision Cinema/Home settings for apps/default
 and HDMI 1–4. Unknown files are listed as skipped and not read.
 
-Each requested context records what the TV actually reports. A successful
-getter without the exact requested input, range and picture mode in its reply
-is not counted as a confirmed context. A confirmed context does not establish
+Each requested context records what the TV actually reports. The C9 stores adjustments by input, picture mode and `_3dStatus: 2d`; its
+picture-mode selector uses input, dynamic range and `_3dStatus` instead. The
+archive records the human-readable range/mode context separately from that
+native query. A reply must match its native dimensions; an additional returned
+dynamic range must agree with the requested range. Otherwise it is not counted
+as a confirmed context. A confirmed context does not establish
 that every calibration setting was returned. Missing values and absent factory
 white-balance replies remain gaps; no input or picture mode is switched to fill
 them in. Alternate modes, application-specific settings, enable-state semantics
