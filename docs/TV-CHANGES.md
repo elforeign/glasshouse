@@ -4,8 +4,11 @@
 
 The Audio tabs read LG's capability, settings and ARC services, the current
 HDMI EDID and audio driver status, and the media-resource declaration file. LG's DTS decoder is inspected on demand, at most once every five minutes.
-No audio setting changes during a snapshot. Native controls use LG's ordinary
-settings service.
+On HAWK2, the source-facing EDID is read through LG's native
+`getEdidData` service for the selected HDMI input; channel metadata is read
+from the mapped HDMI receiver's status file. A snapshot performs no EDID or
+audio-setting write.
+Native controls use LG's ordinary settings service.
 
 Nothing on the read-only root filesystem is written. Everything below other
 than the server's own files happens only when the owner switches it on, and the
@@ -26,6 +29,9 @@ restoration. It performs no calibration, OLED-protection or flash setter.
 `/var/lib/glasshouse-c9-edid/control disable` stops reapplication and restores
 and verifies the TV's saved original. This helper is not removed by the
 Glasshouse app's uninstaller: disable it separately and retain its backup.
+The offline `prepare-trial.py` creates private 5.1 fallback and untested 7.1
+candidate files on the computer only. It connects to no TV, installs nothing
+and never changes the six-channel startup default.
 The per-TV adaptation still needs its own real-TV trial. See
 [the C9 findings](development/TV-RESEARCH.md#c9-hawk2-audio-edid-and-ub820-pcm-51-webos-4102)
 for the scope of the original single-TV tests.

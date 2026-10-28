@@ -10,10 +10,12 @@ something is wrong, and Home Assistant and the TV's own browser fail quietly.
 `test-c9-hawk2-edid.js` runs the Python 3 offline suite for the optional
 `scripts/c9-hawk2-edid` helper. Synthetic EDIDs check both checksums, retention
 of base/video/HDR/Dolby declarations and detailed timing, the exact PCM and
-speaker edit, and refusal of corrupt data, unknown audio layouts, existing
+speaker edit, the separate eight-channel trial and refusal of corrupt data, unknown audio layouts, existing
 speaker allocation and extra timings. Mocked checks cover firmware rejection,
 the read-method allowlist, refusal to replace a private backup, and checking
-controller identity before stopping an unfinished helper for rollback. The wrapper
+controller identity before stopping an unfinished helper for rollback. The
+offline trial CLI is checked for private file permissions and refusal to
+overwrite existing output. The wrapper
 skips on Node 0.10, where `execFileSync` is unavailable; current-node CI runs it.
 
 ```sh
@@ -31,11 +33,17 @@ before the PR becomes ready for review.
 declarations: receiver formats remain separate from TV capabilities, an eARC
 EDID flag does not promote ARC, stale driver values do not become live audio,
 and corrupt or missing evidence remains unknown. The endpoint is read-only and
-starts no process.
+starts no process in those fixtures. Synthetic C9 cases cover `dimension.input`,
+HAWK2's native EDID, invalid checksums/lengths/bytes, failed native reads without
+family fallback, and omission of unspecified, disconnected or unstable channel
+metadata. They check logical input parameters and that native-app playback
+never reads an arbitrary HDMI port. Channel metadata does not establish a
+codec, playback or eARC negotiation.
 
 The dashboard check opens both Audio tabs: the sound settings come first and
 are gone from the TV app's System tab, and a failed read leaves no stale
-readings. The web tab removes stale controls after a failed read and restores
+readings. Both tabs render C9 source channel metadata separately from incoming
+audio. The web tab removes stale controls after a failed read and restores
 them after a successful retry.
 
 `test-lgsettings.js` checks that picture writes refuse hidden settings and

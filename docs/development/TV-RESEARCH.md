@@ -22,6 +22,16 @@ The lower HDMI20 driver buffer did not supply this switch's valid source EDID
 and must not be used as its writer. Receiver/link declarations and native
 readback remain separate from a player/Sonos reception test.
 
+The C9 sound-settings response names its selected input in `dimension.input`
+(`hdmi1`), rather than `dimension.audioInput`. Its legacy audio/ARC queries can
+be unavailable. In that case the `TrueHD` family name must not be treated as
+DTS absence: the checksummed native EDID above includes core DTS. A failed
+native read remains unknown rather than consulting the lower HDMI20 buffer.
+Receiver-3 status exposes Audio InfoFrame channel count, allocation and sample
+frequency. A zero CC or SF means unspecified, not stereo or 48 kHz. Even a
+connected, stable picture can retain these fields during a pause; they are
+source metadata, not a live decoder or receiver-reception test.
+
 The original 256-byte declaration contained PCM SAD `0f5707` (8 channels,
 32/44.1/48/96/192 kHz, 16/20/24 bits), AC3 `150750`, EAC3 `570701`, MAT
 `670403`, DTS `3d1ec0`, DTS-HD `5f7e01`, and no speaker-allocation block.
@@ -64,6 +74,21 @@ performed. Power-cycle volatility, standby/wake and other sources/models
 remain unvalidated. The per-TV adaptation is an explicitly installed
 [experimental helper](https://github.com/rorygallagher2024/glasshouse/tree/main/scripts/c9-hawk2-edid), not a dashboard
 control or part of normal Glasshouse deployment.
+
+An offline eight-channel candidate keeps the 32/44.1/48 kHz PCM rates and
+Dolby descriptors, with PCM SAD `0f0707` and speaker block `834f0000`.
+The additional speaker pair uses bit 6 in the legacy
+[speaker-allocation map](https://kernel.googlesource.com/pub/scm/linux/kernel/git/pratyush/v4l-utils/+/refs/heads/master/utils/v4l2-ctl/v4l2-ctl-edid.cpp).
+It has not been loaded or playback-tested. The six-channel candidate remains
+the startup default. A trial on an already modified TV must roll back to its
+working six-channel state and resume that state's monitor, rather than use a
+factory-original rollback. A native 7.1 channel-identification track is needed;
+expanding a 5.1 movie to eight channels does not verify discrete 7.1 routing.
+
+The C9 media-resource file declares DTS, DTSH and DTSE with six-channel limits.
+Those entries do not prove DTS-HD Master Audio decoding or DTS:X object
+rendering. Native-app decoder caps and receiver-side playback need separate
+checks before adapting a newer TV's compressed-DTS forwarding implementation.
 
 ## Audio declarations and the negotiated link (G3, webOS 9.2.2)
 

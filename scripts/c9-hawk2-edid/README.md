@@ -118,3 +118,33 @@ reapplication after a reboot. Its final listening check after reboot was
 not performed. Other sources, LPCM 7.1, native high-rate PCM, DTS:X, other
 firmware and other models were not validated. No claim is made about HAWK2
 runtime state surviving loss of power; startup reapplication supplies persistence.
+
+## Offline preparation for a later 7.1 test
+
+On a computer, starting with a private factory-original HDMI 1 EDID:
+
+```sh
+python3 scripts/c9-hawk2-edid/prepare-trial.py \
+  --original /private/path/original-hdmi1.bin \
+  --output-directory /private/path/new-pcm71-trial
+```
+
+The output directory must not exist. It contains a manifest, the unchanged
+six-channel fallback and `TRIAL-NOT-INSTALLED-pcm71.bin`, all private. The
+trial retains the same PCM rate limit and Dolby declarations but advertises
+eight PCM channels and an additional rear speaker pair. It has not been
+playback-tested. This command connects to no TV and does not install a
+transaction or change the startup profile.
+
+Do not pass the trial to the six-channel installer or run a second EDID
+service. When a working six-channel override is already installed, a future
+bounded trial needs its own independent rollback to that exact working EDID,
+plus restoration of the original service enable state. Verify this recovery
+before listening tests. The factory-original restore command above deliberately
+restores the factory EDID; it is not that trial's fallback.
+
+Once recovery is verified, record a true 7.1 channel-identification track at
+the Panasonic and receiver, then repeat the known DTS-HD 5.1 and Atmos tests.
+Keep Sound Effects Off. An eight-channel InfoFrame or upmixed 5.1 track alone
+does not verify the seven discrete speaker channels or LFE. No 7.1 profile
+should be made persistent before audible routing and the 5.1 fallback pass.

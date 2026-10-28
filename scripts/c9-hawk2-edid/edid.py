@@ -39,7 +39,11 @@ def parse(data):
     return blocks
 
 
-def build_candidate(data):
+def build_candidate(data, channels=6):
+    require(
+        channels in (6, 8),
+        "Only the tested six-channel or trial eight-channel profile is defined",
+    )
     blocks = parse(data)
     audio = [block for block in blocks if bytearray(block)[0] >> 5 == 1]
     require(len(audio) == 1, "Expected one audio block")
@@ -59,13 +63,20 @@ def build_candidate(data):
         descriptors == [binascii.unhexlify(value) for value in expected],
         "Unvalidated audio declaration",
     )
-    replacement = binascii.unhexlify("0d07071507505707016704033d1ec0")
+    replacement = as_bytes([0x08 | (channels - 1), 7, 7]) + binascii.unhexlify(
+        "1507505707016704033d1ec0"
+    )
     replacement_block = as_bytes([0x20 | len(replacement)]) + replacement
     output_blocks = []
     for block in blocks:
         output_blocks.append(replacement_block if block == audio[0] else block)
         if block == audio[0]:
-            output_blocks.append(binascii.unhexlify("830f0000"))
+            # CTA speaker bits 0..3 describe the 5.1 set; bit 6 adds
+            # RLC/RRC for an eight-channel layout. Eight channels is a trial,
+            # not a change to the default capture/install profile.
+            output_blocks.append(
+                as_bytes([0x83, 0x0F if channels == 6 else 0x4F, 0, 0])
+            )
     collection = b"".join(output_blocks)
     values = bytearray(data)
     old_start = 128 + values[130]

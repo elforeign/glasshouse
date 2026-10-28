@@ -1,6 +1,10 @@
 """No TV access: malformed EDIDs and immutable video/Dolby declarations."""
 
 import pathlib
+import json
+import os
+import subprocess
+import tempfile
 import sys
 import unittest
 from unittest import mock
@@ -60,6 +64,69 @@ class CandidateTests(unittest.TestCase):
         # AC3, EAC3 and MAT stay byte-for-byte, independent of the PCM edit.
         for descriptor in ("150750", "570701", "670403"):
             self.assertIn(bytes.fromhex(descriptor), candidate)
+
+    def test_eight_channel_trial_retains_48khz_and_default_is_unchanged(self):
+        original = fixture()
+        six = edid.build_candidate(original)
+        eight = edid.build_candidate(original, channels=8)
+        self.assertNotEqual(six, eight)
+        self.assertIn(bytes.fromhex("830f0000"), edid.parse(six))
+        self.assertIn(bytes.fromhex("834f0000"), edid.parse(eight))
+        self.assertIn(
+            bytes.fromhex("2f0f07071507505707016704033d1ec0"), edid.parse(eight)
+        )
+        self.assertEqual(eight[:128], original[:128])
+        for candidate in (six, eight):
+            self.assertEqual(
+                [sum(candidate[i : i + 128]) % 256 for i in (0, 128)], [0, 0]
+            )
+            for descriptor in ("150750", "570701", "670403"):
+                self.assertIn(bytes.fromhex(descriptor), candidate)
+
+    def test_undefined_trial_channel_counts_are_refused(self):
+        for channels in (0, 2, 7, 9, "8"):
+            with self.subTest(channels=channels), self.assertRaises(ValueError):
+                edid.build_candidate(fixture(), channels=channels)
+
+    def test_offline_trial_preparation_never_overwrites_output(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            original = root / "original.bin"
+            original.write_bytes(fixture())
+            output = root / "trial"
+            command = [
+                sys.executable,
+                str(MODULES / "prepare-trial.py"),
+                "--original",
+                str(original),
+                "--output-directory",
+                str(output),
+            ]
+            result = subprocess.run(command, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(
+                (output / "fallback-pcm51.bin").read_bytes(),
+                edid.build_candidate(fixture()),
+            )
+            self.assertEqual(
+                (output / "TRIAL-NOT-INSTALLED-pcm71.bin").read_bytes(),
+                edid.build_candidate(fixture(), channels=8),
+            )
+            self.assertFalse(
+                json.loads((output / "manifest.json").read_text())[
+                    "automatic_installation"
+                ]
+            )
+            if os.name == "posix":
+                self.assertEqual(output.stat().st_mode & 0o777, 0o700)
+                for child in output.iterdir():
+                    self.assertEqual(child.stat().st_mode & 0o777, 0o600)
+            saved = {path.name: path.read_bytes() for path in output.iterdir()}
+            result = subprocess.run(command, capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(
+                saved, {path.name: path.read_bytes() for path in output.iterdir()}
+            )
 
     def test_rejects_corrupt_or_truncated_data(self):
         original = fixture()
