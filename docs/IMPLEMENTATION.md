@@ -1110,7 +1110,8 @@ could edit decides nothing installed or given root on its own.
 ## Calibration archives
 
 `lib/calibration.js` is separate from `backup.js`. Its format is
-`glasshouse-calibration-archive`, version 1. Only the C9/05.50.00 capture profile
+`glasshouse-calibration-archive`, version 2 (version 1 preview archives remain
+inspectable). Only the C9/05.50.00 capture profile
 is currently accepted. GET `/api/calibration/status` reports capture and restore
 support; POST `/api/calibration/export` accepts an empty JSON object; POST
 `/api/calibration/inspect` accepts an archive. The POSTs require authentication,

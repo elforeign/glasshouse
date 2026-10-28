@@ -52,6 +52,8 @@ function luna(method, args, cb) {
   if (/getWhiteBalance$/.test(method)) return cb(faults.wbUnavailable ? { returnValue: false } : { returnValue: true, setting: { redGain: 1, greenGain: 2, blueGain: 3 } });
   if (/getProperties$/.test(method)) return cb({ returnValue: true, OledTPC: 'true', OledGSR: 'true' });
   assert.strictEqual(args.category, 'picture');
+  assert(['expert1', 'expert2', 'hdrCinema', 'hdrCinemaBright', 'dolbyHdrCinema', 'dolbyHdrCinemaBright'].indexOf(args.dimension.pictureMode) !== -1,
+    'use settings-service identifiers, not calibration API/file identifiers');
   if (faults.readFailure) return cb({ returnValue: false });
   var dimension = clone(args.dimension);
   if (faults.wrongContext) dimension.input = 'hdmi4';
@@ -74,6 +76,7 @@ try {
     assert.strictEqual(result.ok, true, result.error);
     archive = result.archive;
     assert.strictEqual(archive.format, 'glasshouse-calibration-archive');
+    assert.strictEqual(archive.version, 2);
     assert.strictEqual(archive.files.length, 2);
     assert.strictEqual(archive.files[1].data, new Buffer([1, 2, 3, 0, 255]).toString('base64'));
     assert.strictEqual(archive.coverage.complete, false);

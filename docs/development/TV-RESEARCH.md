@@ -1897,5 +1897,19 @@ The C9's `getSystemSettingDesc` reports dimensions
 missing `_3dStatus: 2d` returned no DB result. Asking for absent named keys also
 refused a profile read. Reading the category with the native three dimensions
 and retaining only allowlisted calibration keys yielded Expert 1/2 readings
-for apps/default and HDMI 1-4 without activating those inputs or modes. Twenty
-HDR/Dolby Vision contexts remained unconfirmed and are retained as gaps.
+for apps/default and HDMI 1-4 without activating those inputs or modes. Those initial queries left twenty
+HDR/Dolby Vision contexts unconfirmed; the corrected identifiers below resolved
+them in the next capture.
+
+The same pictureMode descriptor lists `hdrCinema`, `hdrCinemaBright`,
+`dolbyHdrCinema` and `dolbyHdrCinemaBright`. The underscore names in stored LUT
+files belong to the calibration API, not the settings-service DB dimensions.
+Archive version 2 uses the described settings identifiers and binds format
+and version into its metadata digest; version 1 preview imports retain their
+original context table and digest for inspection.
+
+The version 2 capture confirmed all 30 requested contexts (six modes across
+apps/default and HDMI 1-4), with all 29 stored files and factory white-balance
+readings intact. The corrected table resolves capture gaps; it does not
+establish coverage of every menu key, other picture modes, EEPROM, panel
+identity or factory-reset restoration.

@@ -19,7 +19,8 @@ current TV. It never applies the archive.
 
 The initial capture profile accepts C9 TVs reporting firmware 05.50.00. It is
 based on the storage observed on an OLED65C9PUA (webOS 4.10.2); an isolated read-only capture has now been tried on that TV, with 29 stored
-files and 10 SDR Expert contexts confirmed. Dashboard installation and complete
+files and all 30 requested mode/input contexts confirmed using the described
+settings-service identifiers. Dashboard installation and complete
 coverage remain unqualified. Other models and firmware are refused.
 A readable hardware identity is required. The buttons require dashboard
 controls to be allowed and use the existing authentication and origin guards.
@@ -40,7 +41,9 @@ It requests cool, medium and warm factory white balance, plus selected SDR
 Expert, HDR Cinema/Home and Dolby Vision Cinema/Home settings for apps/default
 and HDMI 1–4. Unknown files are listed as skipped and not read.
 
-Each requested context records what the TV actually reports. The C9 stores adjustments by input, picture mode and `_3dStatus: 2d`; its
+Each requested context records what the TV actually reports. Version 2 archives use LG settings-service mode names such as `hdrCinema` and
+`dolbyHdrCinema`; these differ from the underscore calibration-file names.
+Version 1 preview archives can still be checked. The C9 stores adjustments by input, picture mode and `_3dStatus: 2d`; its
 picture-mode selector uses input, dynamic range and `_3dStatus` instead. The
 archive records the human-readable range/mode context separately from that
 native query. A reply must match its native dimensions; an additional returned

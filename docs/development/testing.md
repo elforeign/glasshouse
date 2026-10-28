@@ -14,8 +14,10 @@ symlink/hard-link rejection, malformed imports and bounded authenticated HTTP
 requests. It checks that the module opens files only for reading and invokes
 only getter methods, that settings/calibration formats are incompatible, and
 that uploaded coverage flags cannot enable restoration. No test opens a TV
-connection or loads calibration data. The capture profile and all restore
-semantics still need hardware qualification; the PR remains a draft.
+connection or loads calibration data. The capture profile has passed isolated C9 read-only capture and its backend
+fixtures on native Node 0.12. The modern-browser rendering fixture is skipped
+on Node versions before 8, which cannot parse its browser-only async code.
+Full coverage and all restore semantics remain unqualified.
 
 ## On every pull request
 

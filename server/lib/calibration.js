@@ -8,7 +8,7 @@ var crypto = require('crypto');
 var say = require('./say');
 var msg = say.msg;
 var FORMAT = 'glasshouse-calibration-archive';
-var VERSION = 1;
+var VERSION = 2;
 var MAX_BYTES = 8 * 1024 * 1024;
 var MAX_FILE = 2 * 1024 * 1024;
 var MAX_FILES = 128;
@@ -30,9 +30,15 @@ var PICTURE_KEYS = [
 ['Red', 'Green', 'Blue', 'Cyan', 'Magenta', 'Yellow'].forEach(function (colour) {
   ['Saturation', 'Hue', 'Luminance'].forEach(function (part) { PICTURE_KEYS.push('colorManagement' + part + colour); });
 });
-var MODES = [
+var LEGACY_MODES = [
   ['sdr', 'expert1'], ['sdr', 'expert2'], ['hdr', 'hdr_cinema'],
   ['hdr', 'hdr_cinema_bright'], ['dolbyHdr', 'dolby_cinema_dark'], ['dolbyHdr', 'dolby_cinema_bright']
+];
+// Settings-service identifiers differ from the underscore names used by the
+// calibration API and stored LUT files. These are the C9's described values.
+var MODES = [
+  ['sdr', 'expert1'], ['sdr', 'expert2'], ['hdr', 'hdrCinema'],
+  ['hdr', 'hdrCinemaBright'], ['dolbyHdr', 'dolbyHdrCinema'], ['dolbyHdr', 'dolbyHdrCinemaBright']
 ];
 var lunaFn = null;
 var io = fs;
@@ -150,10 +156,10 @@ function captureFiles() {
   });
   return { files: files, skipped: skipped };
 }
-function contexts() {
+function contexts(version) {
   var result = [];
   ['default', 'hdmi1', 'hdmi2', 'hdmi3', 'hdmi4'].forEach(function (input) {
-    MODES.forEach(function (mode) { result.push({ input: input, dynamicRange: mode[0], pictureMode: mode[1] }); });
+    (version === 1 ? LEGACY_MODES : MODES).forEach(function (mode) { result.push({ input: input, dynamicRange: mode[0], pictureMode: mode[1] }); });
   });
   return result;
 }
@@ -204,7 +210,7 @@ function readings(cb, active) {
 function coverage(archive) {
   var rows = archive.readings.pictureContexts;
   var verified = rows.filter(function (r) { return r.contextVerified; }).length;
-  var gaps = ['EEPROM is not captured', 'Picture-context coverage is not qualified on hardware',
+  var gaps = ['EEPROM is not captured', 'Coverage is limited to allowlisted settings in six named 2D profiles per input',
     'Only allowlisted stored calibration files are captured', 'Factory-reset restore is not qualified'];
   ['cool', 'medium', 'warm'].forEach(function (t) {
     var values = archive.readings.factoryWhiteBalance[t];
@@ -216,9 +222,11 @@ function coverage(archive) {
     gaps: gaps };
 }
 function manifestHash(archive) {
-  return hash(JSON.stringify({ created: archive.created, source: archive.source,
+  var manifest = { created: archive.created, source: archive.source,
     files: archive.files.map(function (f) { return { area: f.area, name: f.name, size: f.size, sha256: f.sha256 }; }),
-    skippedFiles: archive.skippedFiles, readings: archive.readings }));
+    skippedFiles: archive.skippedFiles, readings: archive.readings };
+  if (archive.version >= 2) { manifest.format = archive.format; manifest.version = archive.version; }
+  return hash(JSON.stringify(manifest));
 }
 
 function create(cb) {
@@ -258,7 +266,7 @@ function create(cb) {
  * coverage is recomputed, never trusted from an uploaded "complete" flag.
  */
 function validate(archive) {
-  if (!object(archive) || archive.format !== FORMAT || archive.version !== VERSION) fail(msg('srv.calibration.invalidArchive', 'Not a supported calibration archive'));
+  if (!object(archive) || archive.format !== FORMAT || [1, VERSION].indexOf(archive.version) === -1) fail(msg('srv.calibration.invalidArchive', 'Not a supported calibration archive'));
   if (typeof archive.created !== 'string' || !Array.isArray(archive.skippedFiles)) fail(msg('srv.calibration.invalidMetadata', 'Invalid calibration metadata'));
   var id = archive.source;
   if (!supported(id) || !/^[0-9a-f]{64}$/.test(id.binding) || typeof id.board !== 'string' || typeof id.sdk !== 'string') fail(msg('srv.calibration.invalidIdentity', 'Invalid calibration identity'));
@@ -274,8 +282,8 @@ function validate(archive) {
     if (data.toString('base64') !== f.data || data.length !== f.size || data.length > MAX_FILE || total > MAX_BYTES || hash(data) !== f.sha256) fail(msg('srv.calibration.fileIntegrity', 'Calibration file integrity failed'));
   });
   var readingsValue = archive.readings;
-  if (!object(readingsValue) || !object(readingsValue.factoryWhiteBalance) || !Array.isArray(readingsValue.pictureContexts) || readingsValue.pictureContexts.length !== contexts().length) fail(msg('srv.calibration.invalidReadings', 'Invalid calibration readings'));
-  var expected = contexts();
+  if (!object(readingsValue) || !object(readingsValue.factoryWhiteBalance) || !Array.isArray(readingsValue.pictureContexts) || readingsValue.pictureContexts.length !== contexts(archive.version).length) fail(msg('srv.calibration.invalidReadings', 'Invalid calibration readings'));
+  var expected = contexts(archive.version);
   readingsValue.pictureContexts.forEach(function (r, index) {
     var query = nativeDimension(expected[index]);
     var dimensionVerified = object(r) && (r.queryDimension

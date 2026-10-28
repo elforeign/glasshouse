@@ -21,7 +21,7 @@ var context = {
   }
 };
 // This script runs in current-node CI; the TV never executes browser JS.
-if (typeof Promise === 'undefined') {
+if (Number(process.versions.node.split('.')[0]) < 8) {
   console.log('test-calibration-ui.js: skipped on legacy node (modern browser script)');
 } else {
   vm.createContext(context);
