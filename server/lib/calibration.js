@@ -80,7 +80,9 @@ function call(method, args, cb) {
  */
 function identity(cb) {
   call(SYSTEM, { keys: ['modelName', 'firmwareVersion', 'boardType', 'sdkVersion'] }, function (r) {
-    if (!r || !r.modelName || !r.firmwareVersion || !r.boardType || !r.sdkVersion) return cb(null);
+    if (!r || !['modelName', 'firmwareVersion', 'boardType', 'sdkVersion'].every(function (key) {
+      return typeof r[key] === 'string' && r[key].length > 0 && r[key].length <= 128;
+    })) return cb(null);
     var mac = null;
     ['/sys/class/net/eth0/address', '/sys/class/net/wlan0/address'].some(function (p) {
       try {
@@ -94,7 +96,7 @@ function identity(cb) {
       binding: hash('glasshouse-calibration-v1\n' + r.modelName + '\n' + r.boardType + '\n' + mac) });
   });
 }
-function supported(id) { return id && /^OLED\d{2}C9[A-Z0-9]+$/.test(id.model) && id.firmware === '05.50.00'; }
+function supported(id) { return object(id) && typeof id.model === 'string' && /^OLED\d{2}C9[A-Z0-9]+$/.test(id.model) && id.firmware === '05.50.00'; }
 function status(cb) {
   identity(function (id) {
     cb({ ok: true, captureSupported: !!supported(id), restoreSupported: false,
@@ -269,11 +271,12 @@ function validate(archive) {
   if (!object(archive) || archive.format !== FORMAT || [1, VERSION].indexOf(archive.version) === -1) fail(msg('srv.calibration.invalidArchive', 'Not a supported calibration archive'));
   if (typeof archive.created !== 'string' || !Array.isArray(archive.skippedFiles)) fail(msg('srv.calibration.invalidMetadata', 'Invalid calibration metadata'));
   var id = archive.source;
-  if (!supported(id) || !/^[0-9a-f]{64}$/.test(id.binding) || typeof id.board !== 'string' || typeof id.sdk !== 'string') fail(msg('srv.calibration.invalidIdentity', 'Invalid calibration identity'));
+  if (!supported(id) || typeof id.binding !== 'string' || !/^[0-9a-f]{64}$/.test(id.binding) ||
+      !['board', 'sdk'].every(function (key) { return typeof id[key] === 'string' && id[key].length > 0 && id[key].length <= 128; })) fail(msg('srv.calibration.invalidIdentity', 'Invalid calibration identity'));
   if (!Array.isArray(archive.files) || !archive.files.length || archive.files.length > MAX_FILES) fail(msg('srv.calibration.invalidFileList', 'Invalid calibration file list'));
   var seen = {}, total = 0;
   archive.files.forEach(function (f) {
-    if (!object(f) || !allowed(f.area, f.name) || typeof f.data !== 'string' || f.data.length > 4 * Math.ceil(MAX_FILE / 3)) fail(msg('srv.calibration.invalidFile', 'Invalid calibration file'));
+    if (!object(f) || typeof f.area !== 'string' || typeof f.name !== 'string' || !allowed(f.area, f.name) || typeof f.data !== 'string' || f.data.length > 4 * Math.ceil(MAX_FILE / 3)) fail(msg('srv.calibration.invalidFile', 'Invalid calibration file'));
     var key = f.area + '/' + f.name;
     if (seen[key]) fail(msg('srv.calibration.duplicateFile', 'Duplicate calibration file'));
     seen[key] = true;

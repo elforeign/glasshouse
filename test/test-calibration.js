@@ -128,6 +128,10 @@ try {
     assert.throws(function () { calibration.validate(bad); }, /Duplicate/);
     bad = clone(archive); bad.files[0].data += '\n';
     assert.throws(function () { calibration.validate(bad); }, /integrity/);
+    bad = clone(archive); bad.files[0].name = [bad.files[0].name];
+    assert.throws(function () { calibration.validate(bad); }, /Invalid calibration file/);
+    bad = clone(archive); bad.source.model = [bad.source.model];
+    assert.throws(function () { calibration.validate(bad); }, /identity/);
   });
   check('uploaded complete/restore flags cannot promote partial coverage', function () {
     var edited = clone(archive); edited.coverage = { complete: true, restoreSupported: true };
