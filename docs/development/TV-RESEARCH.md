@@ -1865,3 +1865,26 @@ came at 50 s: about 9 s from the server answering to the view drawn. The
 first Home press after a reboot took up to 13 s on a CX (webOS 5.6.2), so a
 fixed wait from the server's start is too short for slower TVs; the page's
 own requests to the server show it is running.
+
+## C9 calibration archive coverage
+
+On the OLED65C9PUA, webOS 4.10.2/firmware 05.50.00, prior read-only preservation
+captures identified stored files under `/mnt/lg/cmn_data/external_pqldb` for
+Expert 1/2, HDR Cinema and Dolby Vision Cinema/Bright, plus
+`/mnt/lg/cmn_data/dolby/DolbyVision_UserDisplayConfiguration.txt`. Hashes of
+those files were useful for proving that audio trials left them unchanged.
+That does not establish that those files alone recreate every calibrated
+profile after a factory reset, or that direct file writes reload the active
+pipeline. Factory white-balance getter readings likewise cover only that
+service's reported values, not the whole EEPROM.
+
+The generalized calibration archive captures those allowlisted file types
+and explicit picture-context getter replies without switching inputs or
+picture modes. Its capture behavior has not yet been qualified on a TV. It
+keeps absent or unconfirmed contexts as gaps and implements no restore.
+LG's settings dimensions use `sdr`, `hdr` and `dolbyHdr`; these are separate
+from the audio/video diagnostics' display labels. The
+[bscpylgtv calibration documentation](https://github.com/chros73/bscpylgtv#calibration-functionality-in-full-version)
+also notes that calibration getters may return effective, processed LUTs.
+A future restore must establish original versus effective data and qualify
+reload/order/recovery independently for each supported model and firmware.

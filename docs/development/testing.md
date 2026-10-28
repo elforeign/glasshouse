@@ -5,6 +5,18 @@ the checks exist because a mistake of that kind once reached a release, or
 could have without anyone noticing: the TV gives little feedback when
 something is wrong, and Home Assistant and the TV's own browser fail quietly.
 
+## Calibration archive checks
+
+`test-calibration.js` uses synthetic files and getter replies to check actual
+byte capture, manifest and file integrity, identity matching, unsupported
+models, missing or incorrect dimensions, getter failures, changing snapshots,
+symlink/hard-link rejection, malformed imports and bounded authenticated HTTP
+requests. It checks that the module opens files only for reading and invokes
+only getter methods, that settings/calibration formats are incompatible, and
+that uploaded coverage flags cannot enable restoration. No test opens a TV
+connection or loads calibration data. The capture profile and all restore
+semantics still need hardware qualification; the PR remains a draft.
+
 ## On every pull request
 
 `test-audio.js` exercises the public audio endpoint with captured G3/Marantz

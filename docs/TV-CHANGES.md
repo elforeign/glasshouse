@@ -14,6 +14,16 @@ Nothing on the read-only root filesystem is written. Everything below other
 than the server's own files happens only when the owner switches it on, and the
 riskier controls ask for confirmation in the dashboard first.
 
+## Calibration archives
+
+The Server tab's calibration archive preview reads allowlisted stored LUT and
+Dolby Vision files, picture-context settings and factory white balance. It
+performs no calibration-mode, input, picture-setting, OLED-protection, EEPROM
+or EDID write. No archive or daily job is created on the TV; the browser
+receives the archive on request. Checking an uploaded archive validates it in
+memory and has no extraction or restore path. See
+[coverage and limits](dashboard/calibration.md).
+
 ## Files and startup
 
 | Change | Where | Undone by |
