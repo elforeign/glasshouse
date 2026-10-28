@@ -4,6 +4,67 @@ Findings about how LG's webOS works, kept so the same ground is not covered
 twice. Each entry names the TV and webOS version it was found on. For how
 Glasshouse itself works, see [IMPLEMENTATION.md](../IMPLEMENTATION.md).
 
+## C9 HAWK2 audio EDID and UB820 PCM 5.1 (webOS 4.10.2)
+
+OLED65C9PUA, firmware 05.50.00, tested 28 October 2026: a Panasonic UB820 on
+HDMI 1 decoded an I, Robot DTS-HD Master Audio 5.1 track to PCM 2ch/48 kHz
+when connected directly. An EZCOO SP12H2 at 4K5.1 made the same path deliver
+PCM 5.1/48 kHz to Sonos over HDMI 2 eARC. Panasonic Remaster 1 independently
+changed the direct output to 2ch/96 kHz and silent output; Sound Effects Off
+restored audible stereo. The HDMI 1 input format was Bitstream, TV digital
+output Pass Through and eARC On for the direct comparison.
+
+The C9 reports `tv.model.hdmiSwitchType: HAWK2` and `tv.model.edidType:
+TrueHD`. Source-facing EDIDs are returned by
+`com.webos.service.tv.systemproperty/getEdidData` with `inputType: 0` and
+logical `portNumber: 1..4`. On the measured mapping, HDMI 1 is receiver 3.
+The lower HDMI20 driver buffer did not supply this switch's valid source EDID
+and must not be used as its writer. Receiver/link declarations and native
+readback remain separate from a player/Sonos reception test.
+
+The original 256-byte declaration contained PCM SAD `0f5707` (8 channels,
+32/44.1/48/96/192 kHz, 16/20/24 bits), AC3 `150750`, EAC3 `570701`, MAT
+`670403`, DTS `3d1ec0`, DTS-HD `5f7e01`, and no speaker-allocation block.
+A combined edit changed PCM to `0d0707` (6 channels, 32/44.1/48 kHz), added
+speaker block `830f0000` and removed the DTS-HD SAD to fit the same size.
+The base, non-audio CTA blocks and detailed timing stayed byte-identical;
+both checksums were valid. This produced receiver-3 `AIF-CC2-0: 0x05` and
+`AIF-CA7-0: 0x0b`, and the owner confirmed audible **Multichannel PCM 5.1** in
+Sonos without the splitter. Dolby Atmos also remained audible under that
+same candidate. The individual cause within the combined edit was not
+isolated, the candidate's received sample rate was not separately measured,
+and the Atmos transport subtype was not recorded.
+
+Installed native symbols identify `API_SUMDSVC_WriteEDID` →
+`DIL_VFE_HDMI_WriteEDID` → `DIL_VFE_HDMI21SW_WriteRuntimeEDID` →
+`hdmi21sw_ctl_write_runtime_edid`. The existing EDID debug submenu item 4
+saves 256 bytes to `/tmp/edid_n.bin`; item 5 loads that file through the native
+runtime writer and reads back for comparison. Item 3 is a separate built-in
+EDID download path, excluded from the trial. The writer uses the TV service's
+transport mutex. Independent raw I2C, HDMI20 writes and flash download were
+not used.
+
+The local command socket redirects output, not interactive stdin. The
+terminal-manager attach/focus path plus the actual TV-service stdin provided
+an observable console. A brief RAM-only console-mode change 5 → 4 allowed
+product-console exit; mode 5 was restored before EDID loading. A complete
+F10 escape sequence must already be buffered for the native parser, achieved
+by briefly pausing only its blocked keyboard reader while queuing the bytes,
+then detaching without register/code writes. Console flags were snapshotted
+and restored. These details and fixed addresses are specific to the pinned
+TV-service/debug-library binaries, not a general webOS API.
+
+A TV-local worker restored the original after the controlling helper exited;
+all four native EDIDs matched twice afterward. Disable/restore also passed.
+The single-TV startup service reapplied the candidate after a real reboot,
+confirmed by a changed boot ID and native readback. All 29 stored calibration
+hashes, 18 factory white-balance values, TPC/GSR, Screen Shift and Logo
+Luminance Adjustment were unchanged. Final listening after reboot was not
+performed. Power-cycle volatility, standby/wake and other sources/models
+remain unvalidated. The per-TV adaptation is an explicitly installed
+[experimental helper](https://github.com/rorygallagher2024/glasshouse/tree/main/scripts/c9-hawk2-edid), not a dashboard
+control or part of normal Glasshouse deployment.
+
 ## Audio declarations and the negotiated link (G3, webOS 9.2.2)
 
 OLED55G36LA, firmware 23.25.55, kernel `5.4.268-320`, read on 25 October 2026:

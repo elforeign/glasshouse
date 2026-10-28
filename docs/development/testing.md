@@ -5,6 +5,26 @@ the checks exist because a mistake of that kind once reached a release, or
 could have without anyone noticing: the TV gives little feedback when
 something is wrong, and Home Assistant and the TV's own browser fail quietly.
 
+## C9 EDID prototype checks
+
+`test-c9-hawk2-edid.js` runs the Python 3 offline suite for the optional
+`scripts/c9-hawk2-edid` helper. Synthetic EDIDs check both checksums, retention
+of base/video/HDR/Dolby declarations and detailed timing, the exact PCM and
+speaker edit, and refusal of corrupt data, unknown audio layouts, existing
+speaker allocation and extra timings. Mocked checks cover firmware rejection,
+the read-method allowlist, refusal to replace a private backup, and checking
+controller identity before stopping an unfinished helper for rollback. The wrapper
+skips on Node 0.10, where `execFileSync` is unavailable; current-node CI runs it.
+
+```sh
+python3 test/test_c9_hawk2_edid.py
+```
+
+These checks do not exercise native hardware writes, console recovery or
+startup. The original single-TV implementation passed PCM 5.1/Atmos playback,
+rollback and reboot readback; the per-TV adaptation needs a new TV trial
+before the PR becomes ready for review.
+
 ## On every pull request
 
 `test-audio.js` exercises the public audio endpoint with captured G3/Marantz

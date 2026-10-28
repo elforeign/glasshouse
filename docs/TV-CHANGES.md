@@ -11,6 +11,25 @@ Nothing on the read-only root filesystem is written. Everything below other
 than the server's own files happens only when the owner switches it on, and the
 riskier controls ask for confirmation in the dashboard first.
 
+## Optional C9 EDID research helper
+
+The [C9 HAWK2 helper](https://github.com/rorygallagher2024/glasshouse/tree/main/scripts/c9-hawk2-edid)
+is separate from the server, absent from its deployment/package, and requires
+an explicit root install with `--enable`. It captures private per-TV EDIDs,
+calibration hashes and white balance under `/var/lib/glasshouse-c9-edid`,
+adds `/var/lib/webosbrew/init.d/60-glasshouse-c9-edid`, and loads a validated
+HDMI 1 audio EDID through LG's native runtime writer while the TV is Active.
+Console entry briefly changes a firmware-pinned RAM mode word; console state
+is restored after each transaction. A failed commit invokes TV-local original
+restoration. It performs no calibration, OLED-protection or flash setter.
+
+`/var/lib/glasshouse-c9-edid/control disable` stops reapplication and restores
+and verifies the TV's saved original. This helper is not removed by the
+Glasshouse app's uninstaller: disable it separately and retain its backup.
+The per-TV adaptation still needs its own real-TV trial. See
+[the C9 findings](development/TV-RESEARCH.md#c9-hawk2-audio-edid-and-ub820-pcm-51-webos-4102)
+for the scope of the original single-TV tests.
+
 ## Files and startup
 
 | Change | Where | Undone by |
