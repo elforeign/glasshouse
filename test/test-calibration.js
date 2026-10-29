@@ -87,7 +87,7 @@ try {
     assert.strictEqual(archive.readings.pictureContexts[0].settings.privateUnknownValue, undefined);
     assert.strictEqual(archive.readings.pictureContexts[0].settings.externalPqlDbType, 'synthetic');
     assert.strictEqual(archive.readings.pictureContexts[0].settings.whiteBalanceActive, true);
-    assert.deepStrictEqual(archive.readings.pictureContexts[0].settings.whiteBalanceRed10pt, [4, 5]);
+    assert.strictEqual(JSON.stringify(archive.readings.pictureContexts[0].settings.whiteBalanceRed10pt), '[4,5]');
     assert.strictEqual(archive.readings.pictureContexts[0].settings.pictureModeSettingsActivePerApp, true);
     assert.strictEqual(archive.skippedFiles.length, 1);
     assert.strictEqual(JSON.stringify(archive).indexOf('02:00:00:00:00:01'), -1, 'no raw MAC');
