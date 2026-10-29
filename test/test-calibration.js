@@ -58,7 +58,9 @@ function luna(method, args, cb) {
   var dimension = clone(args.dimension);
   if (faults.wrongContext) dimension.input = 'hdmi4';
   cb({ returnValue: true, dimension: faults.noEcho ? undefined : dimension,
-    settings: { contrast: 85, whiteBalanceRed: [1, 2, 3], privateUnknownValue: 'must not escape' } });
+    settings: { contrast: 85, whiteBalanceRed: [1, 2, 3], externalPqlDbType: 'synthetic',
+      whiteBalanceActive: true, whiteBalanceRed10pt: [4, 5], pictureModeSettingsActivePerApp: true,
+      privateUnknownValue: 'must not escape' } });
 }
 function reset() { faults = {}; calls = []; filesRead = 0; calibration.init({ fs: io, luna: luna }); }
 function capture() {
@@ -83,6 +85,10 @@ try {
     assert.strictEqual(archive.coverage.restoreSupported, false);
     assert.strictEqual(archive.coverage.verifiedContexts, 30);
     assert.strictEqual(archive.readings.pictureContexts[0].settings.privateUnknownValue, undefined);
+    assert.strictEqual(archive.readings.pictureContexts[0].settings.externalPqlDbType, 'synthetic');
+    assert.strictEqual(archive.readings.pictureContexts[0].settings.whiteBalanceActive, true);
+    assert.deepStrictEqual(archive.readings.pictureContexts[0].settings.whiteBalanceRed10pt, [4, 5]);
+    assert.strictEqual(archive.readings.pictureContexts[0].settings.pictureModeSettingsActivePerApp, true);
     assert.strictEqual(archive.skippedFiles.length, 1);
     assert.strictEqual(JSON.stringify(archive).indexOf('02:00:00:00:00:01'), -1, 'no raw MAC');
     assert.strictEqual(calibration.validate(clone(archive)).files, 2);

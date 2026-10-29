@@ -24,6 +24,9 @@ receives the archive on request. Checking an uploaded archive validates it in
 memory and has no extraction or restore path. See
 [coverage and limits](dashboard/calibration.md).
 
+The recovery research-bundle preview is a host-only Python script. It reads
+local evidence and emits no restore actions; it is not deployed to the TV.
+
 ## Files and startup
 
 | Change | Where | Undone by |

@@ -19,6 +19,14 @@ fixtures on native Node 0.12. The modern-browser rendering fixture is skipped
 on Node versions before 8, which cannot parse its browser-only async code.
 Full coverage and all restore semantics remain unqualified.
 
+`test-calibration-recovery-plan.js` invokes a Python 3 host-only synthetic
+bundle test. It covers damaged files and calibration metadata, disagreeing NVM
+passes, getter/image disagreement, unsafe paths, duplicate or missing evidence,
+unrelated database values, identity/firmware mismatches and forged restoration
+claims. The host tool opens local files only and has no write executor. The
+wrapper skips on legacy TV Node versions. Its focused test is
+`python3 -B test/test-calibration-recovery-plan.py`.
+
 ## On every pull request
 
 `test-audio.js` exercises the public audio endpoint with captured G3/Marantz

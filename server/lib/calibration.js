@@ -25,7 +25,14 @@ var PICTURE_KEYS = [
   'whiteBalanceRedGain', 'whiteBalanceRedOffset', 'whiteBalanceGreenGain',
   'whiteBalanceGreenOffset', 'whiteBalanceBlueGain', 'whiteBalanceBlueOffset',
   'whiteBalanceLuminance', 'dynamicContrast', 'hdrDynamicToneMapping', 'blackLevel',
-  'peakBrightness', 'energySaving', 'dynamicColor'
+  'peakBrightness', 'energySaving', 'dynamicColor',
+  // These C9 declarations affect which stored calibration and WB controls
+  // are selected. Keep them as evidence; capture never applies their values.
+  'externalPqlDbType', 'whiteBalanceActive', 'whiteBalanceApplyAllInputs',
+  'whiteBalancePoint', 'whiteBalanceCodeValue', 'whiteBalanceCodeValue10pt',
+  'whiteBalanceIre10pt', 'whiteBalanceRed10pt', 'whiteBalanceGreen10pt',
+  'whiteBalanceBlue10pt', 'wb10PointsGammaValue', 'wb22PointsGammaValue',
+  'pictureModeSettingsActivePerApp', 'pictureSettingModified', 'pcMode'
 ];
 ['Red', 'Green', 'Blue', 'Cyan', 'Magenta', 'Yellow'].forEach(function (colour) {
   ['Saturation', 'Hue', 'Luminance'].forEach(function (part) { PICTURE_KEYS.push('colorManagement' + part + colour); });

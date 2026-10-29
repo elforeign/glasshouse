@@ -54,6 +54,11 @@ white-balance replies remain gaps; no input or picture mode is switched to fill
 them in. Alternate modes, application-specific settings, enable-state semantics
 and unsupported settings may still be missing.
 
+The C9 allowlist also captures available external-PQ selection, white-balance
+activation/application and 10/22-point declaration fields. On the tested C9,
+nine additional fields were returned, giving 53 fields per requested context.
+Capturing a selection flag does not qualify replaying it during restoration.
+
 EEPROM contents are not captured. There is no probing of I2C buses or raw
 hardware access. The archive's identity binds it to the mainboard/network
 hardware; it cannot establish that the panel has not been replaced. A matching
@@ -89,3 +94,41 @@ A supported restore needs a model/firmware-specific implementation and evidence:
 The upstream [bscpylgtv calibration documentation](https://github.com/chros73/bscpylgtv#calibration-functionality-in-full-version)
 describes model-dependent getters and calibration uploads. It is research for
 future qualification, not a runtime dependency or an enabled restore path.
+
+## Offline research-bundle preview
+
+Separate hardware research has preserved a C9's declared 32 KiB physical NVM
+space, its mapped 8 MiB eMMC NVM partition and logical picture database
+snapshots. These are private research artifacts; the dashboard archive does
+not collect them. The physical chip package was not inspected, and neither
+raw image is an approved restore payload.
+
+`scripts/calibration-recovery-plan.py` runs on a computer with Python 3. It
+checks an explicitly indexed research bundle and a separately supplied target
+identity, verifies matching NVM passes and factory white balance, and lists
+remaining restore qualifications. It opens local files only. Its output always
+has `restoreAllowed: false`, `rawNvmWritesAllowed: false` and an empty action
+list; uploaded claims cannot enable a restore.
+
+```sh
+python3 scripts/calibration-recovery-plan.py /path/to/private-bundle \
+  --target-identity /path/to/independent-target-identity.json
+```
+
+The bundle manifest uses format `glasshouse-calibration-research-bundle`,
+version 1, a calibration `source` identity and `artifacts` entries with
+`role`, relative `path`, byte `size` and `sha256`. Required roles are
+`calibration-archive`, `picture-database`, `eeprom-first`, `eeprom-repeat`,
+`emmc-nvm-first`, `emmc-nvm-repeat` and `preservation-check`. Supporting
+artifacts use `evidence` or `calibration-report`. It accepts C9/05.50.00
+research and version 2 calibration archives only. The synthetic host test
+contains an example bundle; it contains no real calibration data.
+
+An identity JSON supplied to an offline command cannot prove the identity of
+a connected TV or its panel. Artifact checksums detect damage, not forged
+evidence. A successful preview is therefore a preservation check, with
+restoration still disabled. A qualified implementation additionally needs
+TV-local interruption recovery, post-reset access, model-specific reload and
+cache handling, and measured reset/restore tests on a lab TV using that TV's
+own calibration. OLED protections and raw DB record IDs must be excluded from
+any future settings merge. The audio helper remains independent.

@@ -1913,3 +1913,44 @@ apps/default and HDMI 1-4), with all 29 stored files and factory white-balance
 readings intact. The corrected table resolves capture gaps; it does not
 establish coverage of every menu key, other picture modes, EEPROM, panel
 identity or factory-reset restoration.
+
+### Physical NVM and recovery research
+
+On the same C9/05.50.00, the installed I2C library's table and native
+initializer map NVM to Linux adapter 4 (`f9000000.i2c`) and 8-bit address
+`0xA0` (7-bit `0x50`). The legacy model configuration calls this channel 5;
+that value must not be passed directly as a Linux adapter number. The native
+implementation declares a 32 KiB extent and uses two big-endian offset bytes
+followed by a combined repeated-start read. Its message flags 6/7 are specific
+to the installed implementation, not portable I2C defaults.
+
+A separate firmware-pinned reader checked the exact library, TV executable,
+model configuration, native ABI, live NVM mapping and adapter identity before
+opening the device. Two fresh 32 KiB physical passes agreed; all 37 stable
+clean cache blocks and all 18 factory white-balance getter values matched.
+Static `DIL_NVM_InitWhiteBalanceDB` reads the three six-byte groups at
+`0x582`, `0x588` and `0x58e`. Its initialization paths can also write defaults;
+these functions must not be called to discover calibration state. The chip
+manufacturer/package marking was not physically inspected.
+
+Static `DIL_NandNVM_Initialize` and the live backing-device string identify a
+separate eMMC NVM store, `/dev/mmcblk0p16`, on this unit. Kernel geometry
+reports 16,384 512-byte sectors. Two bounded read-only 8 MiB copies agreed.
+This adds evidence beyond physical EEPROM; it does not qualify raw partition
+restoration or establish that all reset-sensitive state is present.
+
+Two picture-scoped logical DB snapshots agreed: 231 system records and 8,462
+default records, including eight system records with app-specific overrides.
+The dashboard's selected-context capture is narrower than that logical export.
+The expanded category allowlist returned 53 fields in all 30 requested
+contexts, including external-PQ selection and additional white-balance fields.
+The active SDR Expert context matched all 53 fields. Before/after checks of
+stored calibration, factory white balance, OLED protections, installed code
+and HDMI EDIDs agreed; the user may independently change the active content.
+
+The dashboard does not expose these hardware readers. The host-only recovery
+preview verifies private research bundles but always emits no actions. Raw
+EEPROM/eMMC writes, reset behavior, original/effective LUT conversion,
+enable-state and reload order, panel binding, interruption rollback and
+post-reset access remain separate qualifications. Factory-reset recovery must
+be measured on a lab TV with its own calibration, not an owner's calibrated TV.
