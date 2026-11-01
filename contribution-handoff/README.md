@@ -1,5 +1,7 @@
 # Glasshouse contributions, 1 November 2026
 
+> Superseded: the workflow permission issue is resolved. The conflict-resolved updates are now on PRs #1090 (0d2386e) and #1091 (c51b038). Use those PRs and their current CI results for review; these patches are a historical snapshot.
+
 These patches contain the contributions from PRs [1090](https://github.com/rorygallagher2024/glasshouse/pull/1090) and [1091](https://github.com/rorygallagher2024/glasshouse/pull/1091), resolved against upstream `de5ac2bf37d29c3013be3f80cc33fc4482f1a9ba` (0.137.0). They include translations in the six dashboard languages. The audio patch includes a screenshot rendered from synthetic C9/Sonos data. Neither patch changes workflows or includes private TV data.
 
 The Git OAuth login refused to publish the upstream merge commits because importing upstream's existing workflow change requires `workflow` scope. The source PR branches remain unchanged. Both last-published heads passed all 11 CI checks: calibration `8a23eee453e90f6a630feaf0fc0f2e2d6a6d5b98`, audio `1bdb43fa2ce357d4d7344748083438f118d4f06f`.
